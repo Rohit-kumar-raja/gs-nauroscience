@@ -1,0 +1,8 @@
+{
+  "name": "G.S Neuroscience",
+  "description": "A comprehensive hospital appointment booking and management application featuring AI-powered triage, doctor discovery, and facility exploration.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
