@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, ChevronRight, Heart } from 'lucide-react';
+import { Clock, ChevronRight, Heart, Siren, Droplet, TestTube, HeartPulse } from 'lucide-react';
 import MobileHeader from '../components/MobileHeader';
 import FacilityDetailsSheet from '../components/FacilityDetailsSheet';
 import FacilityBookingSheet from '../components/FacilityBookingSheet';
+import SafeImage from '../components/SafeImage';
 import { FACILITIES } from '../constants';
 import { Facility } from '../types';
+
+const iconMap: Record<string, any> = {
+    'siren': Siren,
+    'droplet': Droplet,
+    'test-tube': TestTube,
+    'heart-pulse': HeartPulse
+};
 
 const FacilitiesPage = () => {
     const [selectedFacility, setSelectedFacility] = useState<Facility | null>(null);
@@ -35,7 +43,6 @@ const FacilitiesPage = () => {
 
     const handleConfirmBooking = () => {
         setBookingFacility(null);
-        // Optionally show a notification or update generic appointments state
     };
 
     return (
@@ -44,6 +51,8 @@ const FacilitiesPage = () => {
             <div className="p-4 space-y-6">
                 {FACILITIES.map((facility) => {
                     const isSaved = savedFacilities.includes(facility.id);
+                    const FallbackIcon = iconMap[facility.icon];
+
                     return (
                         <div key={facility.id} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-slate-100 group transition-all hover:shadow-md relative">
                             <button 
@@ -54,7 +63,12 @@ const FacilitiesPage = () => {
                             </button>
                             
                             <div className="h-48 relative overflow-hidden">
-                                <img src={facility.image} alt={facility.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" />
+                                <SafeImage 
+                                    src={facility.image} 
+                                    alt={facility.name} 
+                                    fallbackIcon={FallbackIcon}
+                                    className="w-full h-full transition-transform duration-700 group-hover:scale-105" 
+                                />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-4">
                                     <h3 className="text-white font-bold text-xl">{facility.name}</h3>
                                 </div>

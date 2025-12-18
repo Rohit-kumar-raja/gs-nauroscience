@@ -15,6 +15,7 @@ export interface Doctor {
   name: string;
   specialty: Department;
   image: string;
+  gender: 'male' | 'female';
   experience: number;
   rating: number;
   patients: number;
@@ -33,6 +34,9 @@ export interface Appointment {
   status: 'confirmed' | 'completed' | 'cancelled';
   notes?: string;
   consultationType?: 'virtual' | 'in-person';
+  paymentStatus?: 'paid' | 'pending' | 'pay_at_desk';
+  paymentId?: string;
+  amount?: number;
 }
 
 export interface Facility {
@@ -65,11 +69,16 @@ export interface Notification {
 }
 
 export interface UserProfile {
+  id: string;
   name: string;
+  email: string;
+  phone: string;
+  dob: string;
+  address: string;
   initials: string;
-  age: number;
-  weight: string;
-  height: string;
-  bloodType: string;
+  age?: number;
+  weight?: string;
+  height?: string;
+  bloodType?: string;
   image?: string;
 }

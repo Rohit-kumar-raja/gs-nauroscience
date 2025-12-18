@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Video } from 'lucide-react';
 import { Doctor } from '../../types';
+import DoctorAvatar from '../DoctorAvatar';
 
 interface DoctorHeroProps {
     doctor: Doctor;
@@ -11,7 +12,12 @@ interface DoctorHeroProps {
 const DoctorHero: React.FC<DoctorHeroProps> = ({ doctor, mode, onClose }) => {
     return (
         <div className="relative h-48 bg-slate-100 shrink-0">
-            <img src={doctor.image} alt={doctor.name} className="w-full h-full object-cover opacity-90" />
+            <DoctorAvatar 
+                src={doctor.image} 
+                gender={doctor.gender} 
+                name={doctor.name} 
+                className="w-full h-full opacity-90" 
+            />
             <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent"></div>
             <button onClick={onClose} className="absolute top-4 right-4 bg-white/50 backdrop-blur-sm p-2 rounded-full shadow-sm text-slate-800 hover:bg-white transition-colors">
                 <X className="h-5 w-5" />

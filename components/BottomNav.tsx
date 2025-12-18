@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Home, Stethoscope, Calendar, Building2, Heart } from 'lucide-react';
+import { Home, Stethoscope, Calendar, Building2, MoreHorizontal } from 'lucide-react';
 
 const BottomNav = () => {
   const location = useLocation();
@@ -9,7 +10,7 @@ const BottomNav = () => {
     { name: 'Doctors', path: '/doctors', icon: Stethoscope },
     { name: 'Appts', path: '/appointments', icon: Calendar },
     { name: 'Facilities', path: '/facilities', icon: Building2 },
-    { name: 'Saved', path: '/my-facilities', icon: Heart },
+    { name: 'More', path: '/profile', icon: MoreHorizontal },
   ];
 
   return (

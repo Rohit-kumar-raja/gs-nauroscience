@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Stethoscope, Phone, Building2, FileText, Activity, User, Plus, Brain, Bone, Sun, Eye, Smile, Baby, TestTube, UserPlus } from 'lucide-react';
 import MobileHeader from '../components/MobileHeader';
@@ -6,11 +6,17 @@ import AIHealthTip from '../components/AIHealthTip';
 import ConsultModeSection from '../components/ConsultModeSection';
 import HomeServiceBookingSheet from '../components/HomeServiceBookingSheet';
 import HomeHeader from '../components/home/HomeHeader';
-import { USER } from '../constants';
+import { authService } from '../services/authService';
+import { UserProfile } from '../types';
 
 const HomePage = ({ onEmergency }: { onEmergency: () => void }) => {
   const navigate = useNavigate();
   const [selectedHomeService, setSelectedHomeService] = useState<string | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(authService.getCurrentUser());
+
+  useEffect(() => {
+    setUser(authService.getCurrentUser());
+  }, []);
 
   const specialties = [
       { name: 'Cardiology', icon: Activity },
@@ -24,29 +30,31 @@ const HomePage = ({ onEmergency }: { onEmergency: () => void }) => {
       { name: 'Dental', icon: Smile },
   ];
 
+  if (!user) return null;
+
   return (
     <div className="min-h-full bg-slate-50 pb-20">
       <MobileHeader title="G.S Neuroscience" onEmergency={onEmergency} />
       
       <div className="p-4 space-y-6">
         {/* Welcome Section */}
-        <HomeHeader user={USER} />
+        <HomeHeader user={user} />
 
         <AIHealthTip />
 
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-4 gap-3">
             {[
-                { label: 'Doctor', icon: Stethoscope, color: 'bg-blue-100 text-blue-600', action: () => navigate('/doctors') },
-                { label: 'Pharmacy', icon: Phone, color: 'bg-green-100 text-green-600', action: () => navigate('/facilities') },
-                { label: 'Facilities', icon: Building2, color: 'bg-purple-100 text-purple-600', action: () => navigate('/facilities') },
-                { label: 'Reports', icon: FileText, color: 'bg-orange-100 text-orange-600', action: () => navigate('/reports') },
+                { label: 'Doctor', icon: Stethoscope, color: 'bg-primary-50 text-primary-600', action: () => navigate('/doctors') },
+                { label: 'Pharmacy', icon: Phone, color: 'bg-accent-50 text-accent-600', action: () => navigate('/facilities') },
+                { label: 'Facilities', icon: Building2, color: 'bg-primary-50 text-primary-600', action: () => navigate('/facilities') },
+                { label: 'Reports', icon: FileText, color: 'bg-accent-50 text-accent-600', action: () => navigate('/reports') },
             ].map((item, i) => (
-                <button key={i} onClick={item.action} className="flex flex-col items-center gap-2 group">
-                    <div className={`w-16 h-16 ${item.color} rounded-2xl flex items-center justify-center shadow-sm group-active:scale-95 transition-transform duration-200`}>
-                        <item.icon className="h-7 w-7" />
+                <button key={i} onClick={item.action} className="flex flex-col items-center gap-2">
+                    <div className={`w-14 h-14 ${item.color} rounded-2xl flex items-center justify-center shadow-sm active:scale-95 transition-transform`}>
+                        <item.icon className="h-6 w-6" />
                     </div>
-                    <span className="text-xs font-semibold text-slate-600">{item.label}</span>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{item.label}</span>
                 </button>
             ))}
         </div>
@@ -54,34 +62,11 @@ const HomePage = ({ onEmergency }: { onEmergency: () => void }) => {
         {/* Consultation Mode Options */}
         <ConsultModeSection />
 
-                {/* Hospital at Home Section */}
-        <div>
-            <div className="flex justify-between items-center mb-3">
-                <h3 className="font-bold text-slate-800 text-lg">Hospital at Home</h3>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-                {[
-                    { label: 'Lab Test', icon: TestTube, color: 'bg-rose-50 text-rose-600 border-rose-100' },
-                    { label: 'Nursing', icon: UserPlus, color: 'bg-teal-50 text-teal-600 border-teal-100' },
-                    { label: 'Physio', icon: Activity, color: 'bg-indigo-50 text-indigo-600 border-indigo-100' },
-                ].map((service, i) => (
-                    <button 
-                        key={i} 
-                        onClick={() => setSelectedHomeService(service.label)}
-                        className={`flex flex-col items-center justify-center p-4 rounded-2xl border ${service.color} active:scale-95 transition-transform hover:shadow-sm`}
-                    >
-                        <service.icon className="h-6 w-6 mb-2" />
-                        <span className="text-xs font-bold text-slate-700">{service.label}</span>
-                    </button>
-                ))}
-            </div>
-        </div>
-
         {/* Specialties Grid (9 items) */}
         <div>
             <div className="flex justify-between items-center mb-3">
-                <h3 className="font-bold text-slate-800 text-lg">Specialties</h3>
-                <span onClick={() => navigate('/doctors')} className="text-primary-600 text-sm font-semibold cursor-pointer hover:underline">See All</span>
+                <h3 className="font-bold text-primary-900 text-lg">Our Specialties</h3>
+                <span onClick={() => navigate('/doctors')} className="text-accent-600 text-xs font-bold cursor-pointer">SEE ALL</span>
             </div>
             <div className="grid grid-cols-3 gap-3">
                 {specialties.map((dept, i) => (
@@ -90,30 +75,29 @@ const HomePage = ({ onEmergency }: { onEmergency: () => void }) => {
                         onClick={() => navigate('/doctors', { state: { filter: dept.name === 'General' ? 'General Medicine' : dept.name } })}
                         className="bg-white rounded-2xl border border-slate-100 p-3 flex flex-col items-center justify-center gap-2 shadow-sm active:scale-95 transition-transform aspect-[1.1/1]"
                     >
-                        <dept.icon className="h-8 w-8 text-primary-500" />
-                        <span className="text-[10px] font-bold text-slate-700">{dept.name}</span>
+                        <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center">
+                            <dept.icon className="h-5 w-5 text-primary-500" />
+                        </div>
+                        <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tight">{dept.name}</span>
                     </div>
                 ))}
             </div>
         </div>
 
-
-
-        {/* Promo Banner */}
-        <div className="bg-slate-900 rounded-3xl p-6 text-white flex justify-between items-center shadow-xl relative overflow-hidden">
+        {/* Promo Banner - New Brand Style */}
+        <div className="brand-gradient rounded-3xl p-6 text-white flex justify-between items-center shadow-xl relative overflow-hidden">
              <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-10 -mt-10 blur-2xl"></div>
-             <div className="absolute bottom-0 left-0 w-24 h-24 bg-primary-500/20 rounded-full -ml-10 -mb-10 blur-xl"></div>
             <div className="relative z-10">
-                <h4 className="font-bold text-lg mb-1">Heart Checkup</h4>
-                <p className="text-xs text-slate-400 mb-4 font-medium">Get 20% off on full body checkups</p>
+                <h4 className="font-bold text-lg mb-1 brand-text-gradient">Premium Checkup</h4>
+                <p className="text-[10px] text-white/70 mb-4 font-medium uppercase tracking-widest">GS Research Centre Special</p>
                 <button 
-                    onClick={() => navigate('/doctors', { state: { filter: 'Cardiology' } })}
-                    className="bg-white text-slate-900 px-4 py-2 rounded-xl text-xs font-bold hover:bg-slate-100 transition-colors active:scale-95 transform"
+                    onClick={() => navigate('/doctors')}
+                    className="bg-white text-primary-600 px-5 py-2 rounded-xl text-xs font-bold active:scale-95 transform transition-all shadow-md"
                 >
                     Book Now
                 </button>
             </div>
-            <Activity className="h-20 w-20 text-slate-700 opacity-50 relative z-10" />
+            <Activity className="h-20 w-20 text-white opacity-10 absolute right-4 top-1/2 -translate-y-1/2" />
         </div>
       </div>
 

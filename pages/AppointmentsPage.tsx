@@ -1,26 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, Star, History, AlertCircle, CheckCircle, XCircle, Video } from 'lucide-react';
+import { Calendar, Clock, History, Video, AlertCircle, ChevronRight, CheckCircle, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import MobileHeader from '../components/MobileHeader';
 import Card from '../components/Card';
 import Button from '../components/Button';
 import { Appointment } from '../types';
+import { appointmentService } from '../services/appointmentService';
 
 const AppointmentsPage = () => {
     const navigate = useNavigate();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
-    const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
-    const [ratingId, setRatingId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
 
     // Cancellation State
     const [cancellingId, setCancellingId] = useState<string | null>(null);
     const [cancelReason, setCancelReason] = useState('');
 
+    const loadAppointments = () => {
+        setLoading(true);
+        const data = appointmentService.getAll();
+        setAppointments(data);
+        setLoading(false);
+    };
+
     useEffect(() => {
-        const stored = localStorage.getItem('appointments');
-        if (stored) {
-            setAppointments(JSON.parse(stored));
-        }
+        loadAppointments();
     }, []);
 
     const initiateCancel = (id: string, e: React.MouseEvent) => {
@@ -29,31 +33,16 @@ const AppointmentsPage = () => {
         setCancelReason('');
     }
 
-    const confirmCancel = () => {
+    const confirmCancel = async () => {
         if (!cancellingId) return;
-
-        const updated = appointments.map(a => {
-            if (a.id === cancellingId) {
-                const feedbackNote = cancelReason ? ` [Cancellation Reason: ${cancelReason}]` : '';
-                return { 
-                    ...a, 
-                    status: 'cancelled' as const,
-                    notes: (a.notes || '') + feedbackNote
-                };
-            }
-            return a;
-        });
-
-        setAppointments(updated);
-        localStorage.setItem('appointments', JSON.stringify(updated));
-        setCancellingId(null);
-        setCancelReason('');
-    }
-
-    const handleRate = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        alert("Thank you for your feedback! Rating submitted.");
-        setRatingId(null);
+        setLoading(true);
+        const success = await appointmentService.updateStatus(cancellingId, 'cancelled', cancelReason);
+        if (success) {
+            loadAppointments();
+            setCancellingId(null);
+            setCancelReason('');
+        }
+        setLoading(false);
     }
 
     const isPast = (dateStr: string, timeStr: string) => {
@@ -70,171 +59,157 @@ const AppointmentsPage = () => {
         isPast(a.date, a.time) || a.status === 'completed' || a.status === 'cancelled'
     ).sort((a, b) => new Date(`${b.date}T${b.time}`).getTime() - new Date(`${a.date}T${a.time}`).getTime());
 
-    const activeList = activeTab === 'upcoming' ? upcomingList : pastList;
-
     const getStatusColor = (status: string, isPastItem: boolean) => {
         if (status === 'cancelled') return 'bg-red-50 text-red-600 border-red-100';
         if (status === 'completed' || (status === 'confirmed' && isPastItem)) return 'bg-blue-50 text-blue-600 border-blue-100';
-        return 'bg-green-50 text-green-600 border-green-100'; // Upcoming Confirmed
+        return 'bg-emerald-50 text-emerald-600 border-emerald-100'; 
     };
 
-    const getStatusIcon = (status: string, isPastItem: boolean) => {
-        if (status === 'cancelled') return <XCircle className="h-3 w-3" />;
-        if (status === 'completed' || (status === 'confirmed' && isPastItem)) return <CheckCircle className="h-3 w-3" />;
-        return <Calendar className="h-3 w-3" />;
+    const AppointmentItem = ({ appt, isUpcoming }: { appt: Appointment, isUpcoming: boolean }) => {
+        const isItemPast = isPast(appt.date, appt.time);
+        const displayStatus = (appt.status === 'confirmed' && isItemPast) ? 'completed' : appt.status;
+        
+        return (
+            <Card className="p-4 relative hover:shadow-md transition-shadow mb-4">
+                <div className="flex justify-between items-start mb-3">
+                    <div className="flex gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-primary-50 text-primary-600 flex items-center justify-center font-bold">
+                            {appt.doctorName.charAt(0)}
+                        </div>
+                        <div>
+                            <h3 className="font-bold text-slate-900 text-sm leading-tight flex items-center gap-1">
+                                {appt.doctorName}
+                                {appt.consultationType === 'virtual' && <Video className="h-3 w-3 text-accent-500" />}
+                            </h3>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase">{appt.doctorSpecialty}</p>
+                        </div>
+                    </div>
+                    <div className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase border ${getStatusColor(appt.status, isItemPast)}`}>
+                        {displayStatus}
+                    </div>
+                </div>
+                
+                <div className="bg-slate-50 rounded-xl p-3 flex items-center justify-between mb-4 border border-slate-100">
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                        <Calendar className="h-3.5 w-3.5 text-slate-400" />
+                        {new Date(appt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                        <Clock className="h-3.5 w-3.5 text-slate-400" />
+                        {appt.time}
+                    </div>
+                </div>
+                
+                <div className="flex gap-2">
+                    {isUpcoming ? (
+                        <>
+                            {appt.consultationType === 'virtual' && (
+                                <Button onClick={() => navigate('/video-call')} className="flex-[2] py-2 text-xs bg-primary-500">
+                                    Join Video Call
+                                </Button>
+                            )}
+                            <Button variant="danger" onClick={(e) => initiateCancel(appt.id, e)} className="flex-1 py-2 text-xs">
+                                Cancel
+                            </Button>
+                        </>
+                    ) : (
+                        <Button variant="outline" onClick={() => navigate('/doctors')} className="w-full py-2 text-xs border-primary-500 text-primary-500">
+                            Book Again
+                        </Button>
+                    )}
+                </div>
+            </Card>
+        );
     };
 
     return (
         <div className="min-h-full bg-slate-50 pb-20">
             <MobileHeader title="My Appointments" showBack />
             
-            {/* Tabs */}
-            <div className="px-4 pt-4 pb-2">
-                <div className="flex p-1 bg-slate-200/60 rounded-xl">
-                    <button 
-                        onClick={() => setActiveTab('upcoming')}
-                        className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'upcoming' ? 'bg-white text-slate-800 shadow-sm scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        Upcoming
-                    </button>
-                    <button 
-                        onClick={() => setActiveTab('past')}
-                        className={`flex-1 py-2.5 text-xs font-bold rounded-lg transition-all ${activeTab === 'past' ? 'bg-white text-slate-800 shadow-sm scale-[1.02]' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        History
-                    </button>
-                </div>
-            </div>
-
-            <div className="p-4 space-y-4">
-                {activeList.length === 0 ? (
-                    <div className="text-center py-20 opacity-50 flex flex-col items-center">
-                        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
-                            {activeTab === 'upcoming' ? <Calendar className="h-8 w-8 text-slate-300" /> : <History className="h-8 w-8 text-slate-300" />}
-                        </div>
-                        <h3 className="text-lg font-medium text-slate-900">No {activeTab} appointments</h3>
-                        <p className="text-sm text-slate-500 max-w-[200px]">
-                            {activeTab === 'upcoming' 
-                                ? "You don't have any scheduled visits coming up." 
-                                : "Your past appointment history will appear here."}
-                        </p>
-                        {activeTab === 'upcoming' && (
-                            <button onClick={() => navigate('/doctors')} className="mt-6 bg-primary-50 text-primary-600 px-4 py-2 rounded-lg font-bold text-sm hover:bg-primary-100 transition-colors">
-                                Find a Doctor
-                            </button>
-                        )}
+            <div className="p-4 space-y-8 animate-fade-in">
+                {loading ? (
+                    <div className="flex flex-col items-center justify-center py-20 gap-4">
+                        <div className="w-10 h-10 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+                        <p className="text-sm font-bold text-slate-400 animate-pulse uppercase tracking-widest">Loading Records...</p>
                     </div>
                 ) : (
-                    activeList.map(appt => {
-                        const isItemPast = isPast(appt.date, appt.time);
-                        const displayStatus = (appt.status === 'confirmed' && isItemPast) ? 'completed' : appt.status;
-                        const isVirtual = appt.consultationType === 'virtual';
-                        
-                        return (
-                            <Card key={appt.id} className="p-5 relative group active:scale-[0.99] transition-transform">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="flex gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden flex-shrink-0">
-                                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-slate-200 to-slate-300 text-slate-600 font-bold text-lg">
-                                                {appt.doctorName.charAt(0)}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-bold text-slate-900 text-base leading-tight flex items-center gap-1.5">
-                                                {appt.doctorName}
-                                                {isVirtual && <Video className="h-3.5 w-3.5 text-indigo-500" />}
-                                            </h3>
-                                            <p className="text-xs text-slate-500 font-medium uppercase tracking-wide mt-1">{appt.doctorSpecialty}</p>
-                                        </div>
-                                    </div>
-                                    <div className={`px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wide border flex items-center gap-1.5 ${getStatusColor(appt.status, isItemPast)}`}>
-                                        {getStatusIcon(appt.status, isItemPast)}
-                                        {displayStatus}
-                                    </div>
+                    <>
+                        {/* CATEGORY: UPCOMING */}
+                        <section>
+                            <div className="flex justify-between items-center mb-4 px-1">
+                                <h2 className="text-xs font-bold text-primary-500 uppercase tracking-widest flex items-center gap-2">
+                                    <div className="w-1 h-4 bg-primary-500 rounded-full"></div>
+                                    Upcoming Appointments
+                                </h2>
+                                <span className="text-[10px] font-bold bg-primary-50 text-primary-600 px-2 py-0.5 rounded-full border border-primary-100">
+                                    {upcomingList.length}
+                                </span>
+                            </div>
+                            
+                            {upcomingList.length === 0 ? (
+                                <div className="bg-white/50 border border-dashed border-slate-200 rounded-3xl p-8 text-center">
+                                    <Calendar className="h-10 w-10 text-slate-200 mx-auto mb-3" />
+                                    <p className="text-sm font-bold text-slate-400">No upcoming visits</p>
+                                    <button 
+                                        onClick={() => navigate('/doctors')}
+                                        className="text-primary-500 text-xs font-bold mt-2 hover:underline"
+                                    >
+                                        Find a Specialist
+                                    </button>
                                 </div>
-                                
-                                <div className="bg-slate-50 rounded-xl p-3 flex items-center justify-between mb-4 border border-slate-100">
-                                    <div className="flex items-center gap-2 text-sm text-slate-700">
-                                        <Calendar className="h-4 w-4 text-slate-400" />
-                                        <span className="font-semibold">{new Date(appt.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                    </div>
-                                    <div className="w-px h-4 bg-slate-300"></div>
-                                    <div className="flex items-center gap-2 text-sm text-slate-700">
-                                        <Clock className="h-4 w-4 text-slate-400" />
-                                        <span className="font-semibold">{appt.time}</span>
-                                    </div>
-                                </div>
-                                
-                                {appt.notes && (
-                                    <div className="mb-4 text-xs text-slate-500 bg-yellow-50 p-2.5 rounded-lg border border-yellow-100 flex gap-2 items-start">
-                                        <AlertCircle className="h-3.5 w-3.5 text-yellow-600 shrink-0 mt-0.5" />
-                                        <span><span className="font-bold text-yellow-700">Note:</span> {appt.notes}</span>
-                                    </div>
-                                )}
+                            ) : (
+                                upcomingList.map(appt => (
+                                    <AppointmentItem key={appt.id} appt={appt} isUpcoming={true} />
+                                ))
+                            )}
+                        </section>
 
-                                <div className="flex gap-3">
-                                    {activeTab === 'upcoming' ? (
-                                        <>
-                                            {isVirtual && displayStatus === 'confirmed' ? (
-                                                <button onClick={() => navigate('/video-call')} className="flex-[2] py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2 animate-pulse">
-                                                    <Video className="h-4 w-4" /> Join Video Call
-                                                </button>
-                                            ) : (
-                                                <button className="flex-1 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">Reschedule</button>
-                                            )}
-                                            <button onClick={(e) => initiateCancel(appt.id, e)} className="flex-1 py-2.5 rounded-xl border border-red-100 bg-red-50 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors">Cancel</button>
-                                        </>
-                                    ) : (
-                                        <>
-                                         {displayStatus !== 'cancelled' && (
-                                            <button onClick={(e) => handleRate(appt.id, e)} className="flex-1 py-2.5 rounded-xl border border-yellow-200 bg-yellow-50 text-xs font-bold text-yellow-700 hover:bg-yellow-100 transition-colors flex items-center justify-center gap-2">
-                                                <Star className="h-3.5 w-3.5" /> Rate
-                                            </button>
-                                         )}
-                                         <button onClick={() => navigate('/doctors')} className="flex-1 py-2.5 rounded-xl border border-primary-100 bg-primary-50 text-xs font-bold text-primary-600 hover:bg-primary-100 transition-colors">
-                                            Book Again
-                                         </button>
-                                        </>
-                                    )}
+                        {/* CATEGORY: PAST */}
+                        <section className="pt-2">
+                            <div className="flex justify-between items-center mb-4 px-1">
+                                <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                    <div className="w-1 h-4 bg-slate-300 rounded-full"></div>
+                                    Past Appointments
+                                </h2>
+                                <span className="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full border border-slate-200">
+                                    {pastList.length}
+                                </span>
+                            </div>
+                            
+                            {pastList.length === 0 ? (
+                                <div className="bg-white/50 border border-dashed border-slate-200 rounded-3xl p-8 text-center opacity-60">
+                                    <History className="h-10 w-10 text-slate-200 mx-auto mb-3" />
+                                    <p className="text-sm font-bold text-slate-400">No past history</p>
                                 </div>
-                            </Card>
-                        );
-                    })
+                            ) : (
+                                pastList.map(appt => (
+                                    <AppointmentItem key={appt.id} appt={appt} isUpcoming={false} />
+                                ))
+                            )}
+                        </section>
+                    </>
                 )}
             </div>
 
-            {/* Cancellation Feedback Modal */}
+            {/* Cancel Modal */}
             {cancellingId && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in">
-                    <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-xl animate-slide-up" onClick={e => e.stopPropagation()}>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">Cancel Appointment</h3>
-                        <p className="text-sm text-slate-500 mb-4">We're sorry you can't make it. Would you like to tell us why?</p>
-                        
-                        <div className="space-y-2 mb-4">
-                            <div className="flex flex-wrap gap-2">
-                                {['Rescheduling', 'Found another doctor', 'Issue Resolved', 'Too expensive', 'Other'].map(reason => (
-                                    <button 
-                                        key={reason}
-                                        onClick={() => setCancelReason(reason)}
-                                        className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${cancelReason === reason ? 'bg-slate-800 text-white border-slate-800' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'}`}
-                                    >
-                                        {reason}
-                                    </button>
-                                ))}
-                            </div>
+                    <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-xl animate-slide-up">
+                        <div className="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                            <AlertCircle className="h-6 w-6" />
                         </div>
-
+                        <h3 className="text-xl font-bold mb-2 text-center text-slate-900">Cancel Appointment?</h3>
+                        <p className="text-slate-500 text-sm text-center mb-6">This action cannot be undone. Please let us know the reason.</p>
                         <textarea
                             value={cancelReason}
                             onChange={(e) => setCancelReason(e.target.value)}
-                            className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl mb-6 focus:ring-2 focus:ring-primary-500 outline-none text-sm resize-none placeholder:text-slate-400"
-                            placeholder="Add more details (optional)..."
+                            className="w-full p-4 bg-slate-50 border border-slate-200 rounded-2xl mb-6 text-sm resize-none focus:ring-2 focus:ring-primary-100 focus:outline-none transition-all"
+                            placeholder="Reason for cancellation (optional)..."
                             rows={3}
                         />
-                        
                         <div className="flex gap-3">
-                            <Button variant="ghost" className="flex-1" onClick={() => setCancellingId(null)}>Keep</Button>
-                            <Button variant="danger" className="flex-1" onClick={confirmCancel}>Confirm Cancel</Button>
+                            <Button variant="ghost" className="flex-1 font-bold text-slate-400" onClick={() => setCancellingId(null)}>Go Back</Button>
+                            <Button variant="danger" className="flex-1 bg-red-600 text-white shadow-lg shadow-red-600/20" onClick={confirmCancel}>Confirm</Button>
                         </div>
                     </div>
                 </div>
