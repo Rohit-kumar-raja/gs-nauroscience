@@ -113,7 +113,7 @@ const AuthPage: React.FC = () => {
       <div className="flex-1 flex flex-col justify-center">
         {/* Header Section with Official Logo */}
         <div className="mb-12 text-center flex flex-col items-center">
-            <div className="mb-8 p-6 bg-slate-50 rounded-[2.5rem] shadow-sm border border-slate-100 inline-block">
+            <div className="mb-8 p-6 px-[10rem] bg-slate-50 rounded-[2.5rem] shadow-sm border border-slate-100 inline-block">
                 <Logo className="h-12 scale-150" />
             </div>
             <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
