@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">myApp</string>
-    <string name="title_activity_main">myApp</string>
+    <string name="app_name">GS Neuroscience </string>
+    <string name="title_activity_main">GS Neuroscience</string>
     <string name="package_name">com.neauroscience.gs</string>
     <string name="custom_url_scheme">com.neauroscience.gs</string>
 </resources>
