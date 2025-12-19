@@ -18,7 +18,7 @@ export const paymentService = {
       // In a real application, you would fetch the `order_id` from your backend first.
       // For this demo, we use a manual integration.
       const options = {
-        key: process.env.API_KEY || 'rzp_test_dummy_key', // Uses provided key
+        key: process.env.API_KEY || 'rzp_test_RtU7ZqO2lizS85', // Uses provided key
         amount: amount * 100, // Amount is in paise
         currency: 'INR',
         name: 'G.S Neuroscience',

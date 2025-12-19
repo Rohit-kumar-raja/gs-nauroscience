@@ -1,74 +1,96 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>G.S Neuroscience | Mobile</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- Razorpay SDK -->
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>G.S Neuroscience | Mobile</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Razorpay SDK -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            primary: {
+              50: '#f1f5f9',
+              100: '#e2e8f0',
+              200: '#cbd5e1',
+              300: '#94a3b8',
+              400: '#64748b',
+              500: '#002B5B', // Brand Navy
+              600: '#00234a',
+              700: '#001b3a',
+              800: '#00142a',
+              900: '#000c1a',
             },
-            colors: {
-              primary: {
-                50: '#f1f5f9',
-                100: '#e2e8f0',
-                200: '#cbd5e1',
-                300: '#94a3b8',
-                400: '#64748b',
-                500: '#002B5B', // Brand Navy
-                600: '#00234a',
-                700: '#001b3a',
-                800: '#00142a',
-                900: '#000c1a',
-              },
-              accent: {
-                50: '#f0f9ff',
-                100: '#e0f2fe',
-                200: '#bae6fd',
-                300: '#7dd3fc',
-                400: '#8ECAE6', // Brand Sky Blue
-                500: '#0ea5e9',
-                600: '#0284c7',
-              }
+            accent: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              200: '#bae6fd',
+              300: '#7dd3fc',
+              400: '#8ECAE6', // Brand Sky Blue
+              500: '#0ea5e9',
+              600: '#0284c7',
+            }
+          },
+          animation: {
+            'slide-up': 'slideUp 0.3s ease-out forwards',
+            'fade-in': 'fadeIn 0.2s ease-out forwards',
+          },
+          keyframes: {
+            slideUp: {
+              '0%': { transform: 'translateY(100%)' },
+              '100%': { transform: 'translateY(0)' },
             },
-            animation: {
-              'slide-up': 'slideUp 0.3s ease-out forwards',
-              'fade-in': 'fadeIn 0.2s ease-out forwards',
-            },
-            keyframes: {
-              slideUp: {
-                '0%': { transform: 'translateY(100%)' },
-                '100%': { transform: 'translateY(0)' },
-              },
-              fadeIn: {
-                '0%': { opacity: '0' },
-                '100%': { opacity: '1' },
-              }
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
             }
           }
         }
       }
-    </script>
-    <style>
-      .no-scrollbar::-webkit-scrollbar { display: none; }
-      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      body { -webkit-tap-highlight-color: transparent; }
-      .brand-gradient {
-        background: linear-gradient(135deg, #002B5B 0%, #004a99 100%);
-      }
-      .brand-text-gradient {
-        background: linear-gradient(to right, #ffffff, #8ECAE6);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-      }
-    </style>
+    }
+  </script>
+  <style>
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    body {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .brand-gradient {
+      background: linear-gradient(135deg, #002B5B 0%, #004a99 100%);
+    }
+
+    .brand-text-gradient {
+      background: linear-gradient(to right, #ffffff, #8ECAE6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    :root {
+      /* This variable is provided by Capacitor automatically */
+      --safe-area-inset-top: env(safe-area-inset-top);
+    }
+
+    body {
+      /* Forces the web content to start below the status bar icons */
+      padding-top: var(--safe-area-inset-top);
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -84,10 +106,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body class="bg-slate-900 text-slate-900 antialiased overflow-hidden">
-    <div id="root" class="h-[100dvh] w-full flex justify-center items-center"></div>
+
+<body class="bg-slate-900 text-slate-900 antialiased overflow-hidden">
+  <div id="root" class="h-[100dvh] w-full flex justify-center items-center"></div>
   <script type="module" src="/index.tsx"></script>
 </body>
+
 </html>
