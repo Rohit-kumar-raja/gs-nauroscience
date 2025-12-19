@@ -1,10 +1,10 @@
+
 import React, { useState, useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import BottomNav from './components/BottomNav';
 import ChatFAB from './components/ChatFAB';
 import EmergencyOverlay from './components/EmergencyOverlay';
 import { authService } from './services/authService';
-import { USER } from './constants';
 
 // Import Pages
 import HomePage from './pages/HomePage';
@@ -21,11 +21,13 @@ import AuthPage from './pages/AuthPage';
 import PersonalDetailsPage from './pages/PersonalDetailsPage';
 import DischargeSummaryPage from './pages/DischargeSummaryPage';
 
-const PrivateRoute = ({ children }: { children: React.ReactNode }) => {
+// PrivateRoute now strictly enforces authentication
+const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const user = authService.getCurrentUser();
   
   if (!user) {
-    localStorage.setItem('gs_neuro_user', JSON.stringify(USER));
+    // If no user is found, redirect to the authentication page
+    return <Navigate to="/auth" replace />;
   }
 
   return <>{children}</>;

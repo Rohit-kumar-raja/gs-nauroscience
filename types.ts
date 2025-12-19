@@ -39,6 +39,17 @@ export interface Appointment {
   amount?: number;
 }
 
+export interface Transaction {
+  id: string;
+  title: string;
+  date: string;
+  amount: number; // Negative for debits, positive for credits
+  type: 'credit' | 'debit';
+  status: 'Completed' | 'Processed' | 'Pending';
+  category: 'Appointment' | 'Lab' | 'Pharmacy' | 'Insurance';
+  referenceId?: string;
+}
+
 export interface Facility {
   id: string;
   name: string;

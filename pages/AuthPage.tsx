@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Phone, ChevronRight, ShieldCheck, Mail, Calendar, MapPin, User, ArrowLeft, AlertCircle } from 'lucide-react';
 import Button from '../components/Button';
 import Logo from '../components/Logo';
 import { authService } from '../services/authService';
+import type { RecaptchaVerifier } from 'firebase/auth';
 
 type AuthStep = 'PHONE' | 'OTP' | 'PROFILE';
 
@@ -23,9 +25,15 @@ const AuthPage: React.FC = () => {
     address: ''
   });
 
-  const [recaptchaVerifier, setRecaptchaVerifier] = useState<any>(null);
+  const [recaptchaVerifier, setRecaptchaVerifier] = useState<RecaptchaVerifier | null>(null);
 
   useEffect(() => {
+    // If user is already logged in, redirect to home
+    if (authService.getCurrentUser()) {
+        navigate('/');
+        return;
+    }
+
     // Initialize recaptcha when the component mounts
     try {
         const verifier = authService.setupRecaptcha('recaptcha-container');
@@ -33,11 +41,20 @@ const AuthPage: React.FC = () => {
     } catch (err) {
         console.error("Recaptcha Init Error", err);
     }
-  }, []);
+    
+    // Cleanup recaptcha on unmount
+    return () => {
+      if (recaptchaVerifier) {
+        try {
+          recaptchaVerifier.clear();
+        } catch (e) {}
+      }
+    };
+  }, [navigate]);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (phone.length < 10) return;
+    if (phone.length < 10 || !recaptchaVerifier) return;
     setError(null);
     setLoading(true);
     
@@ -53,7 +70,7 @@ const AuthPage: React.FC = () => {
 
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp.length < 6) return; // Firebase standard is 6
+    if (otp.length < 6) return;
     setError(null);
     setLoading(true);
     
@@ -135,7 +152,7 @@ const AuthPage: React.FC = () => {
             </div>
             <Button 
                 type="submit" 
-                disabled={phone.length < 10 || loading}
+                disabled={phone.length < 10 || loading || !recaptchaVerifier}
                 className="w-full py-4 rounded-2xl text-lg font-bold shadow-xl shadow-primary-600/20"
             >
               {loading ? 'Requesting SMS...' : 'Send OTP'} <ChevronRight className="h-5 w-5" />

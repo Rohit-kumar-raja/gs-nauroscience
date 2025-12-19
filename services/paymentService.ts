@@ -1,3 +1,4 @@
+
 import { UserProfile } from '../types';
 
 declare var Razorpay: any;
@@ -15,16 +16,17 @@ export const paymentService = {
     description: string
   ): Promise<PaymentResponse | null> => {
     return new Promise((resolve, reject) => {
-      // In a real application, you would fetch the `order_id` from your backend first.
-      // For this demo, we use a manual integration.
+      // Razorpay Checkout Configuration
+      // Using the user-provided key: rzp_test_RtU7ZqO2lizS85
       const options = {
-        key: process.env.API_KEY || 'rzp_test_RtU7ZqO2lizS85', // Uses provided key
-        amount: amount * 100, // Amount is in paise
+        key: 'rzp_test_RtU7ZqO2lizS85', 
+        amount: amount * 100, // Amount is in paise (1500 INR = 150000 paise)
         currency: 'INR',
         name: 'G.S Neuroscience',
         description: description,
-        image: 'https://gs-neuro.com/logo.png', // Placeholder logo
+        image: 'https://cdn-icons-png.flaticon.com/512/883/883356.png', // Hospital Icon
         handler: function (response: PaymentResponse) {
+          // Success callback
           resolve(response);
         },
         prefill: {
@@ -34,22 +36,27 @@ export const paymentService = {
         },
         notes: {
           address: user.address,
+          patient_id: user.id
         },
         theme: {
-          color: '#002B5B', // Primary brand color
+          color: '#002B5B', // Brand Navy
         },
         modal: {
           ondismiss: function() {
+            // User closed the payment modal
             resolve(null);
           }
         }
       };
 
       try {
+        if (typeof Razorpay === 'undefined') {
+          throw new Error("Razorpay SDK not loaded. Please check your internet connection.");
+        }
         const rzp = new Razorpay(options);
         rzp.open();
       } catch (error) {
-        console.error("Razorpay initiation failed", error);
+        console.error("Razorpay initiation failed:", error);
         reject(error);
       }
     });

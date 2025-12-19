@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { X, ChevronLeft } from 'lucide-react';
-import { Doctor, Appointment } from '../types';
+import { Doctor, Appointment, Transaction } from '../types';
 import BookingFormStep from './booking/BookingFormStep';
 import BookingSuccessSummary from './booking/BookingSuccessSummary';
 import PaymentStep from './booking/PaymentStep';
 import { authService } from '../services/authService';
 import { paymentService } from '../services/paymentService';
+import { transactionService } from '../services/transactionService';
 
 const BottomSheetBooking: React.FC<{ 
   doctor: Doctor | null, 
@@ -73,11 +74,25 @@ const BottomSheetBooking: React.FC<{
       patientName: name,
       notes,
       status: 'confirmed',
-      consultationType,
+      consultationType: consultationType as 'virtual' | 'in-person',
       paymentStatus,
       paymentId,
       amount: CONSULTATION_FEE
     };
+
+    // Create Transaction Record
+    const tx: Transaction = {
+        id: `tx_${Date.now()}`,
+        title: `Consultation - ${doctor.name}`,
+        date: new Date().toISOString(),
+        amount: -CONSULTATION_FEE, // Negative for debit
+        type: 'debit',
+        status: paymentStatus === 'paid' ? 'Completed' : 'Pending',
+        category: 'Appointment',
+        referenceId: newAppointment.id
+    };
+    transactionService.create(tx);
+
     setAppointment(newAppointment);
     setStep(3);
   };
@@ -120,7 +135,7 @@ const BottomSheetBooking: React.FC<{
         {step === 1 && (
           <BookingFormStep 
             doctor={doctor}
-            consultationType={consultationType}
+            consultationType={consultationType as 'virtual' | 'in-person'}
             date={date}
             setDate={setDate}
             time={time}
@@ -147,7 +162,7 @@ const BottomSheetBooking: React.FC<{
             date={date}
             time={time}
             patientName={name}
-            consultationType={consultationType}
+            consultationType={consultationType as 'virtual' | 'in-person'}
             onConfirm={handleFinalConfirm}
             paymentStatus={appointment?.paymentStatus}
           />
